@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "CalmSpace",
+    "slug": "calm-space-mobile",
+    "version": "1.0.0",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-router"
+    ],
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": true },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f5f0ff"
+      }
+    }
+  }
+}
