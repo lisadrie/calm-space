@@ -1,9 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { API_URL } from '../config';
 
-// ⚠️ Remplace par ton IP locale si tu testes sur téléphone physique
-// Ex: 'http://192.168.1.XX:5001'
-const API_URL = 'http://172.20.10.3:5001';
+export { API_URL };
 
 interface Decoded {
     id: number;
@@ -70,8 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     setToken(null);
                     await SecureStore.deleteItemAsync('auth_token');
                 }
-            } catch (err) {
-                console.error(err);
+            } catch {
+                // silent – no server on first load (offline/dev)
             } finally {
                 setLoading(false);
             }

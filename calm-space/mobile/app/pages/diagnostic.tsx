@@ -5,8 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PageHeader from '../../components/PageHeader';
 import PageTransition from '../../components/PageTransition';
 import { useAuth } from '../../hooks/useAuth';
-
-const API_URL = 'http://172.20.10.3:5001';
+import { API_URL } from '../../config';
 
 const EVENTS = [
     { event: 'Décès du conjoint', score: 100 },

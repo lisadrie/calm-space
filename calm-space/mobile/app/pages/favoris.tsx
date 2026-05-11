@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import PageHeader from '../../components/PageHeader';
 import PageTransition from '../../components/PageTransition';
 import { useAuth } from '../../hooks/useAuth';
-
-const API_URL = 'http://172.20.10.3:5001';
+import { API_URL } from '../../config';
 
 export default function FavorisPage() {
     const { token } = useAuth();

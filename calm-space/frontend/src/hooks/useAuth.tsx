@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:5001';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 export interface Decoded {
   id: number;
@@ -27,6 +28,7 @@ interface AuthContextType {
   setError: (e: string) => void;
   setMessage: (m: string) => void;
   isAuthentified: () => boolean;
+  refreshUser: () => Promise<void>;
   Signup: (
     civility: string, lastname: string, firstname: string, email: string,
     phone: string, birthdate: string, city: string, postcode: string,
@@ -39,6 +41,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
   const [decoded, setDecoded] = useState<Decoded | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -46,25 +49,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAuthentified = () => !!decoded;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${API_URL}/auth/authme`, {
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const json = await res.json();
-          setDecoded(json);
-        } else {
-          setDecoded(null);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/authme`, { credentials: 'include' });
+      setDecoded(res.ok ? await res.json() : null);
+    } catch {
+      setDecoded(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchUser(); }, [fetchUser]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/authme`, { credentials: 'include' });
+      setDecoded(res.ok ? await res.json() : null);
+    } catch {
+      setDecoded(null);
+    }
   }, []);
 
   const Signup = useCallback(async (
@@ -79,25 +83,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           civility, lastname, firstname, email, phone: phone || null,
-          birthdate, city, postcode, pseudo, password, confirm_password
+          birthdate, city, postcode, pseudo, password, confirm_password,
         }),
       });
+      const json = await res.json();
       if (res.ok) {
-        const json = await res.json();
         setDecoded(json.user);
         setMessage('Compte créé avec succès !');
         setError('');
-        window.location.href = '/';
+        navigate('/');
       } else {
-        const json = await res.json();
         setError(json.error || 'Une erreur est survenue lors de la création du compte.');
         setMessage('');
       }
-    } catch (err) {
-      setError('Une erreur est survenue.');
-      console.error(err);
+    } catch {
+      setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
     }
-  }, []);
+  }, [navigate]);
 
   const Signin = useCallback(async (email: string, password: string) => {
     try {
@@ -107,42 +109,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+      const json = await res.json();
       if (res.ok) {
-        const json = await res.json();
         setDecoded(json.user);
         setMessage('Connexion réussie !');
         setError('');
-        window.location.href = '/';
+        navigate('/');
       } else {
-        const json = await res.json();
         setError(json.error || 'Identifiants incorrects.');
         setMessage('');
       }
-    } catch (err) {
-      setError('Une erreur est survenue lors de la connexion.');
+    } catch {
+      setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
       setMessage('');
-      console.error(err);
     }
-  }, []);
+  }, [navigate]);
 
   const logout = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setDecoded(null);
-        window.location.href = '/';
-      }
-    } catch (err) {
-      setError('Une erreur est survenue lors de la déconnexion.');
-      console.error(err);
-    }
-  }, []);
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch { /* cookie already cleared on server error */}
+    setDecoded(null);
+    navigate('/');
+  }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{ decoded, loading, message, error, setError, setMessage, isAuthentified, Signup, Signin, logout }}>
+    <AuthContext.Provider value={{
+      decoded, loading, message, error,
+      setError, setMessage, isAuthentified, refreshUser,
+      Signup, Signin, logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -154,4 +150,5 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+/** @deprecated import API_URL directly */
 export const API = API_URL;

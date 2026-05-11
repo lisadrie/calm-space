@@ -1,25 +1,32 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
 import Navigation from '../components/Navigation';
-import { useAuth, API } from '../hooks/useAuth';
+import { useAuth, API_URL } from '../hooks/useAuth';
 
 const ProfilePage = () => {
-  const { decoded, logout, loading, error, setError, setMessage, message } = useAuth();
+  const { decoded, logout, loading, error, setError, setMessage, message, refreshUser } = useAuth();
   const [form, setForm] = useState({
-    civility: decoded?.civility || 'Monsieur',
-    lastname: decoded?.lastname || '',
+    civility:  decoded?.civility  || 'Monsieur',
+    lastname:  decoded?.lastname  || '',
     firstname: decoded?.firstname || '',
-    email: decoded?.email || '',
-    phone: decoded?.phone || '',
+    email:     decoded?.email     || '',
+    phone:     decoded?.phone     || '',
     birthdate: decoded?.birthdate ? decoded.birthdate.split('T')[0] : '',
-    city: decoded?.city || '',
-    postcode: decoded?.postcode || '',
-    pseudo: decoded?.pseudo || '',
+    city:      decoded?.city      || '',
+    postcode:  decoded?.postcode  || '',
+    pseudo:    decoded?.pseudo    || '',
   });
   const [saving, setSaving] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -28,7 +35,7 @@ const ProfilePage = () => {
     setError('');
     setMessage('');
     try {
-      const res = await fetch(`${API}/auth/updateprofile`, {
+      const res = await fetch(`${API_URL}/auth/updateprofile`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -37,22 +44,27 @@ const ProfilePage = () => {
       const json = await res.json();
       if (res.ok) {
         setMessage('Profil mis à jour avec succès !');
-        // Force page reload to refresh JWT
-        setTimeout(() => window.location.reload(), 1200);
+        await refreshUser();
       } else {
         setError(json.message || json.error || 'Erreur lors de la mise à jour.');
       }
-    } catch (err) {
-      setError('Une erreur est survenue.');
+    } catch {
+      setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen soft-bg flex items-center justify-center">
+      <div className="min-h-screen soft-bg">
         <Navigation />
-        <p className="text-gray-400">Chargement...</p>
+        <div className="flex items-center justify-center pt-40">
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto mb-3 rounded-full border-4 border-purple-300 border-t-purple-600 animate-spin" />
+            <p className="text-gray-400 text-sm">Chargement…</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -63,17 +75,13 @@ const ProfilePage = () => {
         <Navigation />
         <main className="max-w-2xl mx-auto px-4 pt-28 pb-16">
           <div className="calm-card p-10 text-center animate-scale-in">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center text-4xl">
-              👤
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gray-100 flex items-center justify-center">
+              <UserCircleIcon className="w-10 h-10 text-gray-400" />
             </div>
             <h1 className="text-3xl font-bold gradient-text mb-3">Mon Profil</h1>
-            <p className="text-gray-500 mb-6">
-              Connecte-toi pour accéder à ton profil et suivre ton parcours bien-être.
-            </p>
+            <p className="text-gray-500 mb-6">Connecte-toi pour accéder à ton profil et suivre ton parcours bien-être.</p>
             <Link to="/connexion">
-              <button className="btn-primary text-base py-3 px-8">
-                Se Connecter
-              </button>
+              <button className="btn-primary text-base py-3 px-8">Se Connecter</button>
             </Link>
           </div>
         </main>
@@ -94,7 +102,7 @@ const ProfilePage = () => {
         {/* User card */}
         <div className="calm-card p-6 mb-6 flex items-center gap-4 animate-scale-in">
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, hsl(265,75%,65%), hsl(200,85%,65%))' }}
           >
             {decoded.pseudo.charAt(0).toUpperCase()}
@@ -112,13 +120,13 @@ const ProfilePage = () => {
 
           {message && (
             <div className="mb-5 bg-green-50 border-l-4 border-green-500 p-4 rounded-xl flex items-start gap-3">
-              <span className="text-green-600 font-bold">✓</span>
+              <CheckCircleIcon className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
               <p className="text-green-700 text-sm">{message}</p>
             </div>
           )}
           {error && (
             <div className="mb-5 bg-red-50 border-l-4 border-red-400 p-4 rounded-xl flex items-start gap-3">
-              <span className="text-red-500 font-bold">✕</span>
+              <ExclamationCircleIcon className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
@@ -146,7 +154,7 @@ const ProfilePage = () => {
 
             <div>
               <label htmlFor="email" className="label-text">Adresse e-mail</label>
-              <input type="email" id="email" name="email" value={form.email} onChange={handleChange} required className="input-field" />
+              <input type="email" id="email" name="email" value={form.email} onChange={handleChange} required autoComplete="email" className="input-field" />
             </div>
 
             <div>
@@ -166,7 +174,7 @@ const ProfilePage = () => {
               </div>
               <div>
                 <label htmlFor="postcode" className="label-text">Code postal</label>
-                <input type="text" id="postcode" name="postcode" value={form.postcode} onChange={handleChange} required className="input-field" />
+                <input type="text" id="postcode" name="postcode" value={form.postcode} onChange={handleChange} required maxLength={5} className="input-field" />
               </div>
             </div>
 
@@ -177,10 +185,23 @@ const ProfilePage = () => {
 
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="btn-primary flex-1 text-base py-3">
-                {saving ? 'Sauvegarde...' : 'Enregistrer les modifications'}
+                {saving ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Sauvegarde…
+                  </>
+                ) : 'Enregistrer les modifications'}
               </button>
-              <button type="button" onClick={logout} className="btn-outline py-3 px-6 inline-flex items-center gap-2">
-                🚪 Déconnexion
+              <button
+                type="button"
+                onClick={logout}
+                className="btn-outline py-3 px-5 gap-2"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                Déconnexion
               </button>
             </div>
           </form>

@@ -1,6 +1,6 @@
 # CalmSpace 💜
 
-> Le site **Calm Bubble Haven** adapté dans la stack de **Claire Obscure**
+> Le site **Calm Bubble Haven**
 > (Express.js + PostgreSQL + JWT — React CRA + TypeScript + Tailwind CSS)
 
 ## Architecture
@@ -36,7 +36,7 @@ SECRET_KEY=<votre_clé_secrète>
 
 ### Base de données
 
-1. Exécuter d'abord le schéma principal de Claire Obscure (`schema.sql`)
+1. Exécuter d'abord le schéma principal (`schema.sql`)
 2. Puis exécuter les additions CalmSpace :
 
 ```bash

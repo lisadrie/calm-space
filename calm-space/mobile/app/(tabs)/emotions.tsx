@@ -5,8 +5,7 @@ import Header from '../../components/Header';
 import PageTransition from '../../components/PageTransition';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
-
-const API_URL = 'http://172.20.10.3:5001';
+import { API_URL } from '../../config';
 
 const EMOTIONS = [
     { emoji: '😊', label: 'Joyeux', color: '#fbbf24' },

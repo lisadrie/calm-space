@@ -5,8 +5,7 @@ import Header from '../../components/Header';
 import PageTransition from '../../components/PageTransition';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
-
-const API_URL = 'http://172.20.10.3:5001'; // ⚠️ Remplace par ton IP locale ex: http://192.168.1.XX:5001
+import { API_URL } from '../../config';
 
 const reassuringFacts = [
     "Tu t'en sors mieux que tu ne le penses.",
