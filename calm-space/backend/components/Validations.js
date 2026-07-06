@@ -1,6 +1,6 @@
 const Civility = civility => ['Monsieur', 'Madame', 'Autre'].includes(civility);
 const Names = name => /^[a-zA-ZÀ-ÿ\s'-]{2,}$/.test(name);
-const Email = email => /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
+const Email = email => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
 const Phone = phone => /^(\+33|0)[1-9](\d{2}){4}$/.test(phone);
 const Birthdate = birthdate => {
     const date = new Date(birthdate);

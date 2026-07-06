@@ -8,6 +8,10 @@ import DiagnosticPage from './pages/DiagnosticPage';
 import ConnexionPage from './pages/ConnexionPage';
 import InscriptionPage from './pages/InscriptionPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 
 function App() {
   return (
@@ -21,6 +25,10 @@ function App() {
         <Route path="/connexion" element={<ConnexionPage />} />
         <Route path="/inscription" element={<InscriptionPage />} />
         <Route path="/profil" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="utilisateurs" element={<AdminUsersPage />} />
+        </Route>
       </Routes>
     </AuthProvider>
   );

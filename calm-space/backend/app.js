@@ -30,5 +30,6 @@ app.use('/users', require('./routes/Users'));
 app.use('/emotions', require('./routes/Emotions'));
 app.use('/favorites', require('./routes/Favorites'));
 app.use('/stress', require('./routes/Stress'));
+app.use('/admin', require('./routes/Admin'));
 
 module.exports = app;
