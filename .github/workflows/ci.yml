@@ -1,0 +1,84 @@
+# ============================================================================
+#  CI - CalmSpace (Intégration Continue)
+#  ---------------------------------------------------------------------------
+#  Ce pipeline s'exécute automatiquement à chaque push et pull request.
+#  Il garantit qu'aucun code cassé n'est intégré (lint + tests + build).
+#
+#  Jobs :
+#    - backend  : installe les dépendances, vérifie le lint, lance les 40 tests Jest
+#    - frontend : installe les dépendances, vérifie le lint et compile le build React
+#
+#  Les deux jobs tournent en parallèle sur des machines Ubuntu propres.
+# ============================================================================
+name: CI - CalmSpace
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  #  BACKEND : Express + PostgreSQL + JWT
+  #  La base de données est mockée dans les tests → pas besoin de PostgreSQL ici.
+  # ---------------------------------------------------------------------------
+  backend:
+    name: Backend - Lint & Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: calm-space/backend
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: calm-space/backend/package-lock.json
+
+      - name: Installation des dépendances (npm ci)
+        run: npm ci
+
+      - name: Analyse statique du code (ESLint)
+        run: npm run lint --if-present
+
+      - name: Exécution des tests unitaires (Jest)
+        # SECRET_KEY factice pour la CI : les tests mockent la base de données,
+        # mais la signature/vérification des jetons JWT a besoin d'une clé
+        # cohérente entre le code et les tests. Ce N'EST PAS le secret de
+        # production — celui-ci vit dans les variables d'environnement de
+        # l'hébergeur (ou dans les GitHub Secrets), jamais dans le dépôt.
+        env:
+          SECRET_KEY: calmspace_secret_123
+        run: npm test
+
+  # ---------------------------------------------------------------------------
+  #  FRONTEND : React + TypeScript + Tailwind
+  #  Le build échoue automatiquement si un warning ESLint est détecté (CI=true).
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: calm-space/frontend
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: calm-space/frontend/package-lock.json
+
+      - name: Installation des dépendances (npm ci)
+        run: npm ci
+
+      - name: Compilation du build de production
+        run: npm run build
