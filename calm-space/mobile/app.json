@@ -2,6 +2,7 @@
   "expo": {
     "name": "CalmSpace",
     "slug": "calm-space-mobile",
+    "scheme": "calmspace",
     "version": "1.0.0",
     "web": {
       "favicon": "./assets/favicon.png"
@@ -11,12 +12,17 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      "@react-native-community/datetimepicker"
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": true },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#f5f0ff"

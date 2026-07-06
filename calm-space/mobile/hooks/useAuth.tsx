@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const storedToken = await SecureStore.getItemAsync('auth_token');
                 if (!storedToken) { setLoading(false); return; }
-                const res = await fetch(`${API_URL}/auth/authMe`, {
+                const res = await fetch(`${API_URL}/auth/authme`, {
                     headers: { Authorization: `Bearer ${storedToken}` },
                 });
                 if (res.ok) {

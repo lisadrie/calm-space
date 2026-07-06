@@ -26,7 +26,7 @@ const isLogged = (req, res, next) => {
 const isModerator = async (req, res, next) => {
     const decoded = req.user;
     try {
-        const moderator = await Moderators.selectByID(decoded.id);
+        const moderator = await Moderators.selectByUserID(decoded.id);
         if (moderator) {
             next();
         } else {
@@ -40,7 +40,7 @@ const isModerator = async (req, res, next) => {
 const isSuperAdmin = async (req, res, next) => {
     const decoded = req.user;
     try {
-        const admin = await SuperAdmins.selectByID(decoded.id);
+        const admin = await SuperAdmins.selectByUserID(decoded.id);
         if (admin) {
             next();
         } else {
@@ -54,7 +54,7 @@ const isSuperAdmin = async (req, res, next) => {
 const isAdmin = async (req, res, next) => {
     const decoded = req.user;
     try {
-        const admin = await Admins.selectByID(decoded.id);
+        const admin = await Admins.selectByUserID(decoded.id);
         if (admin) {
             next();
         } else {
