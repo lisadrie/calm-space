@@ -1,0 +1,25 @@
+# ============================================================================
+#  Backend CalmSpace — API Express + PostgreSQL + JWT
+#  Image de production : n'installe que les dépendances nécessaires au runtime.
+# ============================================================================
+FROM node:20-slim
+
+# Dossier de travail dans le conteneur
+WORKDIR /app
+
+# 1) On copie d'abord les manifestes pour profiter du cache de couches Docker :
+#    tant que package*.json ne change pas, npm ci n'est pas relancé.
+COPY package*.json ./
+
+# 2) Installation reproductible, sans les dépendances de développement
+#    (jest, eslint, nodemon, supertest ne servent pas en production).
+RUN npm ci --omit=dev
+
+# 3) Copie du code source (node_modules et .env sont exclus via .dockerignore)
+COPY . .
+
+# L'API écoute sur le port fourni par l'environnement (5001 par défaut)
+EXPOSE 5001
+
+# Démarrage du serveur
+CMD ["node", "server.js"]

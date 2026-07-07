@@ -1,0 +1,85 @@
+# ============================================================================
+#  CalmSpace — Environnement de déploiement complet (démonstration)
+#  ---------------------------------------------------------------------------
+#  Une seule commande monte toute la stack :
+#      docker compose up --build
+#
+#  Services :
+#    - db       : PostgreSQL 16, schéma injecté automatiquement au 1er démarrage
+#    - backend  : API Express (port 5001)
+#    - frontend : application React compilée, servie par nginx (port 3000)
+#
+#  ⚠️  Les valeurs de mot de passe / secret ci-dessous sont des valeurs de
+#      DÉMONSTRATION. En production, elles seraient fournies par des secrets
+#      (variables d'environnement de l'hébergeur, GitHub Secrets, coffre-fort…).
+# ============================================================================
+name: calmspace
+
+services:
+  # ---------------------------------------------------------------------------
+  #  Base de données PostgreSQL
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: calmspace-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: calmspace_db_demo
+      POSTGRES_DB: calmspace
+    volumes:
+      # Persistance des données entre les redémarrages
+      - db_data:/var/lib/postgresql/data
+      # Le schéma est exécuté AUTOMATIQUEMENT au tout premier démarrage
+      # (dossier spécial lu par l'image officielle PostgreSQL).
+      - ./backend/schema_complet.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    ports:
+      # Exposé sur 5433 côté hôte pour ne PAS entrer en conflit avec un
+      # PostgreSQL déjà installé localement (qui occupe généralement 5432).
+      - "5433:5432"
+    healthcheck:
+      # Le backend attendra que ce test réussisse avant de démarrer.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d calmspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  #  API Backend (Express)
+  # ---------------------------------------------------------------------------
+  backend:
+    build: ./backend
+    container_name: calmspace-backend
+    environment:
+      PORT: 5001
+      # Connexion à la base : HOST = nom du service Docker "db"
+      USR: postgres
+      PSWD: calmspace_db_demo
+      HOST: db
+      DB: calmspace
+      # Secret JWT (démo — à remplacer en production)
+      SECRET_KEY: change_me_in_production
+      # Autorise le frontend à appeler l'API (CORS)
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+
+  # ---------------------------------------------------------------------------
+  #  Frontend (React servi par nginx)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # URL de l'API telle que vue depuis le navigateur de l'utilisateur
+        REACT_APP_API_URL: http://localhost:5001
+    container_name: calmspace-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  db_data:
