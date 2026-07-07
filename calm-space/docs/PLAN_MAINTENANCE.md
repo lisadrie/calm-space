@@ -59,8 +59,17 @@ Les niveaux et délais reprennent **exactement** les exigences du cahier des cha
 | 🟠 Majeur | **7 h** ouvrées | **16 h** ouvrées |
 | 🟡 Mineur (par lots) | **1 jour** ouvré | **40 h** ouvrées |
 
-Dans Jira, ces niveaux sont configurés via le champ **Priorité** (Bloquant-critique,
-Bloquant-fort, Majeur, Mineur).
+### 4.3 Correspondance des priorités dans Jira
+
+Les sévérités sont portées par le champ **Priorité** de Jira. On peut soit personnaliser les
+libellés, soit s'appuyer sur les priorités par défaut selon la correspondance suivante :
+
+| Sévérité (cahier des charges) | Priorité Jira |
+|-------------------------------|---------------|
+| 🔴 Bloquant – critique | Highest |
+| 🔴 Bloquant – fort | High |
+| 🟠 Majeur | Medium |
+| 🟡 Mineur | Low |
 
 ---
 
