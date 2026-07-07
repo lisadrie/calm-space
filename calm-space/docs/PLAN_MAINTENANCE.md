@@ -163,25 +163,16 @@ Ces indicateurs permettent au Ministère de suivre la qualité de service dans l
 
 ---
 
-## 8. Guide de configuration Jira (pour la démonstration)
+## 8. Configuration de l'outil
 
-> À réaliser une fois pour la soutenance — pensez à faire des **captures d'écran**.
+Jira a été configuré spécifiquement pour le projet CalmSpace :
 
-1. **Créer un compte gratuit** sur [https://www.atlassian.com/software/jira](https://www.atlassian.com/software/jira)
-   → « Get it free ».
-2. **Créer un projet** de type **Kanban** (ou « Suivi des bugs »), nommé par ex. `CalmSpace — Support`.
-3. **Configurer les colonnes** du tableau pour refléter le workflow : *À faire → En cours →
-   En recette → Terminé*.
-4. **Configurer les priorités** pour correspondre aux sévérités : Bloquant-critique,
-   Bloquant-fort, Majeur, Mineur.
-5. **Créer 3–4 tickets d'exemple** représentatifs :
-   - 🐞 Incident bloquant : « Erreur 500 à la connexion » (priorité Bloquant-critique) ;
-   - 🐞 Incident mineur : « Faute d'orthographe sur la page d'accueil » (priorité Mineur) ;
-   - ✨ Évolution : « Export PDF du journal d'émotions » ;
-   - 📄 Tâche : « Mise à jour mensuelle des dépendances (veille) ».
-6. **Créer un Dashboard** avec un ou deux gadgets (ex. « Répartition par statut »,
-   « Tickets par priorité ») pour illustrer le pilotage.
-7. Faire glisser un ticket d'une colonne à l'autre pendant la démo pour montrer le workflow.
+- un projet de type **Kanban** nommé « CalmSpace — Support » ;
+- un tableau organisé selon le workflow **À faire → En cours → En recette → Terminé** ;
+- deux types de tickets : **Request** (incidents signalés par le client) et **Task** (évolutions et tâches internes) ;
+- le champ **Priorité** portant les niveaux de sévérité (Bloquant, Majeur, Mineur), complété par des **étiquettes** dédiées ;
+- des tickets représentatifs : un incident bloquant, un incident mineur, une évolution et une tâche de veille ;
+- un **tableau de bord** présentant la répartition des tickets par statut et par priorité, pour le pilotage de la maintenance.
 
 ---
 

@@ -92,9 +92,9 @@ fusionnée que si **tous les tests passent** (garantie de non-régression).
 ```
    Développeur                GitHub                     Résultat
    ───────────                ──────                     ────────
-   git push  ───────────►  Déclenche la CI  ──────►  ✅ Tests + lint + build
-   Pull Request               (Actions)               verts → fusion autorisée
-                                                       ❌ échec → fusion bloquée
+   git push  ───────────►  Déclenche la CI  ──────►  Tests + lint + build
+   Pull Request               (Actions)               verts : fusion autorisée
+                                                       échec : fusion bloquée
 ```
 
 ---
