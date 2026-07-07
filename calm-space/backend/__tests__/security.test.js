@@ -77,3 +77,21 @@ describe('T-SEC-01 — Protection des routes API', () => {
         expect(res.body.message).toBe('Unauthorized');
     });
 });
+
+// ─── T-SEC-02 — En-têtes de sécurité HTTP (helmet) ──────────────────────────
+describe('T-SEC-02 — En-têtes de sécurité HTTP (helmet)', () => {
+    test('X-Content-Type-Options: nosniff est présent (anti MIME-sniffing)', async () => {
+        const res = await request(app).get('/auth/authme');
+        expect(res.headers['x-content-type-options']).toBe('nosniff');
+    });
+
+    test("X-Powered-By est masqué (ne révèle pas qu'on utilise Express)", async () => {
+        const res = await request(app).get('/auth/authme');
+        expect(res.headers['x-powered-by']).toBeUndefined();
+    });
+
+    test('X-Frame-Options est défini (anti-clickjacking)', async () => {
+        const res = await request(app).get('/auth/authme');
+        expect(res.headers['x-frame-options']).toBeDefined();
+    });
+});
