@@ -14,6 +14,32 @@ demandes) de CalmSpace, en organisant la communication entre le **client** (le M
 Chaque incident ou demande d'évolution donne lieu à un **ticket** suivi de sa création jusqu'à
 sa résolution et sa validation.
 
+### Qui utilise l'outil, et comment ?
+
+Le ticketing est un outil **interne de gestion**, partagé **entre le client et le prestataire**.
+Ce n'est **pas** un outil destiné au grand public.
+
+| Acteur | Utilise Jira ? | Rôle |
+|--------|:---:|------|
+| **Utilisateurs de l'application** (grand public) | Non | Utilisent uniquement CalmSpace. En cas de bug, ils le signalent via un **formulaire de contact / support**. |
+| **Client (le Ministère)** | Oui | **Déclare les incidents** et **demande les évolutions** (via un référent), puis **valide** les corrections livrées. |
+| **Prestataire (équipe de développement)** | Oui | **Reçoit, qualifie, traite** les tickets, met à jour leur statut et les **clôture**. Crée aussi des tickets internes (tâches techniques, veille, bugs détectés par la supervision). |
+
+Parcours d'un problème signalé par un utilisateur final :
+
+```
+Utilisateur (voit un bug)
+      │ signale via le formulaire de contact / support
+      ▼
+Référent du Ministère (client) ──► crée un ticket Jira
+      │
+      ▼
+Prestataire (dev) ──► prend en charge, corrige, passe « En recette »
+      │
+      ▼
+Client ──► valide ──► ticket clôturé
+```
+
 ---
 
 ## 2. Choix de l'outil : Jira
