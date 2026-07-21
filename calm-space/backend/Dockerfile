@@ -5,7 +5,7 @@
 # Node 24 = version LTS active. Les versions plus anciennes (Node 20, en fin de
 # vie depuis avril 2026) ne reçoivent plus de correctifs de sécurité : le scan
 # Trivy de la CI remontait des vulnérabilités CRITIQUES corrigeables.
-FROM node:24-slim
+FROM node:26-slim
 
 # npm est mis à jour avant toute installation : la version livrée avec l'image
 # (npm 11) embarque une copie vulnérable de `tar` (CVE-2026-59873, déni de
