@@ -1,0 +1,140 @@
+# ============================================================================
+#  SÉCURITÉ - CalmSpace (analyse automatisée)
+#  ---------------------------------------------------------------------------
+#  Ce pipeline complète la CI fonctionnelle (ci.yml) par une analyse de
+#  sécurité automatique. Il s'exécute :
+#    - à chaque push et pull request sur les branches principales ;
+#    - tous les lundis à 6 h UTC (veille : une dépendance saine aujourd'hui
+#      peut devenir vulnérable demain, sans qu'une seule ligne de code change).
+#
+#  Jobs :
+#    - audit-backend  : npm audit sur les dépendances de PRODUCTION → BLOQUANT
+#    - audit-frontend : npm audit complet → INFORMATIF (voir note du job)
+#    - trivy-images   : scan des images Docker (OS + bibliothèques) → BLOQUANT
+#                       sur les vulnérabilités CRITICAL corrigeables
+# ============================================================================
+name: Sécurité - CalmSpace
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+  schedule:
+    # Tous les lundis à 06:00 UTC — veille hebdomadaire sur les dépendances.
+    - cron: "0 6 * * 1"
+  # Permet de relancer l'analyse à la demande depuis l'onglet Actions.
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------------------
+  #  BACKEND : audit des dépendances
+  #  On audite les dépendances de production (--omit=dev) : ce sont les seules
+  #  réellement embarquées dans l'image Docker et exposées en ligne. Une faille
+  #  dans ESLint ou Jest ne tourne jamais en production.
+  #  Seuil : "high" → la CI échoue dès qu'une vulnérabilité haute ou critique
+  #  est détectée dans le code livré.
+  # ---------------------------------------------------------------------------
+  audit-backend:
+    name: Backend - Audit des dépendances
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: calm-space/backend
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: calm-space/backend/package-lock.json
+
+      - name: Audit des dépendances de production (bloquant)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit complet, dépendances de développement incluses (informatif)
+        # Ne fait jamais échouer le pipeline : sert de tableau de bord pour la
+        # revue hebdomadaire des dépendances de développement.
+        continue-on-error: true
+        run: npm audit
+
+  # ---------------------------------------------------------------------------
+  #  FRONTEND : audit des dépendances
+  #  Particularité de Create React App : `react-scripts` est déclaré dans
+  #  "dependencies" alors qu'il ne sert qu'à COMPILER l'application. Il entraîne
+  #  avec lui webpack, babel, jest… soit l'essentiel des alertes remontées. Ces
+  #  paquets ne sont pas livrés au navigateur : le build de production ne
+  #  contient que du HTML/CSS/JS statique servi par nginx.
+  #  L'audit est donc informatif ici, et son résultat est examiné à chaque
+  #  revue de dépendances plutôt que de bloquer mécaniquement les fusions.
+  # ---------------------------------------------------------------------------
+  audit-frontend:
+    name: Frontend - Audit des dépendances (informatif)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: calm-space/frontend
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: calm-space/frontend/package-lock.json
+
+      - name: Audit des dépendances (informatif)
+        continue-on-error: true
+        run: npm audit
+
+  # ---------------------------------------------------------------------------
+  #  IMAGES DOCKER : scan Trivy
+  #  npm audit ne voit que les paquets npm. Trivy analyse l'image COMPLÈTE :
+  #  la distribution de base (Debian pour node:20-slim, Alpine pour nginx),
+  #  ses bibliothèques système (OpenSSL, zlib…) et les paquets applicatifs.
+  #  C'est la contrepartie « conteneur » de la sécurisation.
+  # ---------------------------------------------------------------------------
+  trivy-images:
+    name: Docker - Scan des images (Trivy)
+    runs-on: ubuntu-latest
+    strategy:
+      # On scanne les deux images même si la première échoue : on veut le
+      # rapport complet en une seule exécution.
+      fail-fast: false
+      matrix:
+        include:
+          - nom: backend
+            contexte: calm-space/backend
+          - nom: frontend
+            contexte: calm-space/frontend
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Construction de l'image ${{ matrix.nom }}
+        run: docker build -t calmspace-${{ matrix.nom }}:ci ${{ matrix.contexte }}
+
+      - name: Scan Trivy - rapport complet (informatif)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: calmspace-${{ matrix.nom }}:ci
+          format: table
+          severity: HIGH,CRITICAL
+          # exit-code 0 → affiche le rapport sans faire échouer le job.
+          exit-code: "0"
+
+      - name: Scan Trivy - échec si vulnérabilité CRITIQUE corrigeable
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: calmspace-${{ matrix.nom }}:ci
+          format: table
+          severity: CRITICAL
+          # ignore-unfixed : on ne bloque pas sur une faille sans correctif
+          # disponible en amont — il n'y aurait aucune action possible.
+          ignore-unfixed: true
+          exit-code: "1"

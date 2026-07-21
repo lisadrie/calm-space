@@ -1,0 +1,81 @@
+# ============================================================================
+#  Dependabot - CalmSpace (veille automatisée sur les dépendances)
+#  ---------------------------------------------------------------------------
+#  Dependabot surveille les dépendances du projet et ouvre automatiquement une
+#  Pull Request quand une mise à jour (notamment de sécurité) est disponible.
+#  Chaque PR est relue et validée par la CI (tests + audit) avant fusion :
+#  la mise à jour est donc automatisée, mais jamais appliquée à l'aveugle.
+#
+#  Écosystèmes surveillés : npm (backend, frontend, mobile), les Dockerfiles
+#  et les actions GitHub utilisées par les pipelines.
+# ============================================================================
+version: 2
+
+updates:
+  # --- Dépendances npm ------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /calm-space/backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependances, securite, backend]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: npm
+    directory: /calm-space/frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependances, securite, frontend]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # react-scripts entraîne des dizaines de paquets de compilation :
+      # on les regroupe en une seule PR pour éviter le bruit.
+      outils-de-build:
+        patterns:
+          - "react-scripts"
+          - "@babel/*"
+          - "webpack*"
+          - "postcss*"
+          - "tailwindcss"
+
+  - package-ecosystem: npm
+    directory: /calm-space/mobile
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    labels: [dependances, mobile]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # --- Images de base des conteneurs ---------------------------------------
+  # Surveille les tags des images `FROM` (node:20-slim, nginx, postgres…) :
+  # c'est ce qui apporte les correctifs de sécurité du système d'exploitation.
+  - package-ecosystem: docker
+    directory: /calm-space/backend
+    schedule:
+      interval: weekly
+    labels: [dependances, securite, docker]
+    commit-message:
+      prefix: "chore(docker)"
+
+  - package-ecosystem: docker
+    directory: /calm-space/frontend
+    schedule:
+      interval: weekly
+    labels: [dependances, securite, docker]
+    commit-message:
+      prefix: "chore(docker)"
+
+  # --- Actions GitHub utilisées par les pipelines --------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependances, ci]
+    commit-message:
+      prefix: "chore(ci)"
