@@ -138,6 +138,13 @@ seuil de blocage du scanner, ce qui n'aurait fait que masquer le risque. La cha�
 tests a été alignée sur la même version de Node, afin que le code soit testé sur le
 runtime qui l'exécute réellement en production.
 
+Une alerte a subsisté après cette montée de version : le `npm` livré avec l'image Node
+embarque sa propre copie de `tar`, vulnérable (CVE-2026-59873). Elle échappait à
+`npm audit`, qui n'analyse que les dépendances déclarées du projet — pas l'outillage
+présent dans l'image. La mise à jour de npm au moment du build (`npm install -g npm@latest`)
+la corrige. Illustration concrète du fait qu'une image de production contient bien plus
+que le code de l'application.
+
 **Limite assumée.** Ces outils couvrent les vulnérabilités **connues et publiées** des
 dépendances. Ils ne détectent pas une faille de logique métier propre à l'application
 (mauvais contrôle de rôle, référence directe à un objet…) : celle-ci relève de la revue

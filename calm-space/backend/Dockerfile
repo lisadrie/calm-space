@@ -7,6 +7,12 @@
 # Trivy de la CI remontait des vulnérabilités CRITIQUES corrigeables.
 FROM node:24-slim
 
+# npm est mis à jour avant toute installation : la version livrée avec l'image
+# (npm 11) embarque une copie vulnérable de `tar` (CVE-2026-59873, déni de
+# service par archive gzip piégée), que le scan Trivy remonte en CRITIQUE.
+# npm 12 embarque tar 7.5.19, corrigé.
+RUN npm install -g npm@latest && npm cache clean --force
+
 # Dossier de travail dans le conteneur
 WORKDIR /app
 
