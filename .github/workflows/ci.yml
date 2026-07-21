@@ -34,7 +34,7 @@ jobs:
         working-directory: calm-space/backend
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Installation de Node.js 20
         uses: actions/setup-node@v4
@@ -71,7 +71,7 @@ jobs:
         working-directory: calm-space/frontend
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Installation de Node.js 20
         uses: actions/setup-node@v4
@@ -109,7 +109,7 @@ jobs:
       packages: write   # autorise l'écriture sur ghcr.io
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Connexion au registre GitHub (ghcr.io)
         # GITHUB_TOKEN est fourni automatiquement par GitHub Actions :

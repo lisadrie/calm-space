@@ -43,7 +43,7 @@ jobs:
         working-directory: calm-space/backend
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Installation de Node.js 20
         uses: actions/setup-node@v4
@@ -79,7 +79,7 @@ jobs:
         working-directory: calm-space/frontend
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Installation de Node.js 20
         uses: actions/setup-node@v4
@@ -114,7 +114,7 @@ jobs:
             contexte: calm-space/frontend
     steps:
       - name: Récupération du code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Construction de l'image ${{ matrix.nom }}
         run: docker build -t calmspace-${{ matrix.nom }}:ci ${{ matrix.contexte }}
