@@ -21,7 +21,7 @@ ENV REACT_APP_API_URL=$REACT_APP_API_URL
 RUN npm run build
 
 # --- Étape 2 : serveur web statique -----------------------------------------
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
 # Configuration nginx adaptée à une Single Page Application (React Router)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 # On récupère uniquement le build compilé depuis l'étape précédente
