@@ -40,7 +40,7 @@ L'application est conteneurisée avec **Docker** et orchestrée par **Docker Com
 | Service | Rôle | Image / Base |
 |---------|------|--------------|
 | `frontend` | Interface React compilée, servie en statique | build React → nginx |
-| `backend` | API REST (métier, authentification) | Node.js 20 |
+| `backend` | API REST (métier, authentification) | Node.js 24 (LTS) |
 | `db` | Base de données relationnelle | PostgreSQL 16 |
 
 **Bénéfices :** environnement **reproductible** (une commande `docker compose up --build`),
