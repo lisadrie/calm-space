@@ -129,6 +129,41 @@ l'image entière, y compris le système d'exploitation de base — une faille Op
 proposant la montée de version. Détection (audit + Trivy) et remédiation (Dependabot)
 forment ainsi une boucle complète.
 
+### Résultat de la première exécution — vulnérabilités réellement détectées
+
+La mise en service de l'outillage n'a pas été un simple exercice de configuration : le premier
+scan a **immédiatement révélé quatre vulnérabilités critiques**, toutes situées dans le
+**système de base des images Docker** — donc **invisibles pour `npm audit`**.
+
+| Image | Paquet | CVE | Nature |
+|-------|--------|-----|--------|
+| Backend (Debian 12) | `libgnutls30` | CVE-2026-42010 | **Contournement d'authentification** via caractère NUL |
+| Backend (Debian 12) | `libgnutls30` | CVE-2026-33845 | Déni de service DTLS |
+| Backend (Node 20) | `tar` (embarqué dans npm) | CVE-2026-59873 | Déni de service par archive gzip piégée |
+| Frontend (Alpine 3.21) | `libcrypto3` / `libssl3` (OpenSSL) | CVE-2026-31789 | Dépassement de tampon |
+
+**Cause.** Les images officielles `node:20-slim` et `nginx:1.27-alpine` ne sont reconstruites
+que périodiquement : elles accusaient un retard sur les correctifs déjà publiés par Debian et
+Alpine. Un simple `docker pull` ne suffisait donc pas — vérification faite.
+
+**Corrections appliquées.**
+
+- Application des correctifs système **au moment du build** : `apt-get upgrade` (backend) et
+  `apk upgrade` (frontend). Les trois vulnérabilités système sont éliminées.
+- **Suppression de npm de l'image backend** après l'installation des dépendances. La version
+  de `tar` embarquée dans npm 10 est vulnérable et ne peut pas être corrigée sous Node 20 (le
+  correctif exige npm 12, donc Node 22+). npm ne servant qu'au build — le conteneur démarre
+  avec `node server.js` — le retirer supprime la vulnérabilité **et** réduit la surface
+  d'attaque de l'image de production.
+
+Après correction, le scan des deux images ne remonte **plus aucune vulnérabilité critique ni
+haute disposant d'un correctif**.
+
+**Enseignement.** Ce résultat illustre concrètement la complémentarité décrite plus haut :
+`npm audit` validait le projet sans rien signaler, alors que l'image livrée contenait une
+faille de **contournement d'authentification**. Sans analyse au niveau du conteneur, elle
+serait partie en production.
+
 **Limite assumée.** Ces outils couvrent les vulnérabilités **connues et publiées** des
 dépendances. Ils ne détectent pas une faille de logique métier propre à l'application
 (mauvais contrôle de rôle, référence directe à un objet…) : celle-ci relève de la revue

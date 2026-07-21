@@ -22,6 +22,13 @@ RUN npm run build
 
 # --- Étape 2 : serveur web statique -----------------------------------------
 FROM nginx:1.27-alpine
+
+# Correctifs de sécurité du système de base (même raison que côté backend) :
+# l'image nginx:1.27-alpine embarquait une version d'OpenSSL vulnérable
+# (CVE-2026-31789), déjà corrigée dans les dépôts Alpine.
+# Détecté automatiquement par le scan Trivy (.github/workflows/security.yml).
+RUN apk upgrade --no-cache
+
 # Configuration nginx adaptée à une Single Page Application (React Router)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 # On récupère uniquement le build compilé depuis l'étape précédente
