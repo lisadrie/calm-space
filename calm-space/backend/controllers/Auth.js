@@ -66,8 +66,12 @@ const Signup = async (req, res) => {
             { expiresIn: '1h' }
         );
         res.cookie('authToken', token, {
-            httpOnly: false,
-            secure: false,
+            // Le jeton est inaccessible au JavaScript de la page : meme en cas
+            // de XSS, un script injecte ne peut pas le lire ni l'exfiltrer.
+            httpOnly: true,
+            // Cookie transmis uniquement en HTTPS des que l'application est
+            // deployee (en local, le developpement se fait en HTTP).
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'Lax',
             maxAge: 3600000
         });
@@ -118,8 +122,8 @@ const Signin = async (req, res) => {
                 { expiresIn: '1h' }
             );
             res.cookie('authToken', token, {
-                httpOnly: false,
-                secure: false,
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
                 maxAge: 3600000
             });
@@ -206,8 +210,12 @@ const updateProfile = async (req, res) => {
             { expiresIn: '1h' }
         );
         res.cookie('authToken', token, {
-            httpOnly: false,
-            secure: false,
+            // Le jeton est inaccessible au JavaScript de la page : meme en cas
+            // de XSS, un script injecte ne peut pas le lire ni l'exfiltrer.
+            httpOnly: true,
+            // Cookie transmis uniquement en HTTPS des que l'application est
+            // deployee (en local, le developpement se fait en HTTP).
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'Lax',
             maxAge: 3600000
         });
