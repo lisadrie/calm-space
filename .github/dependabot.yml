@@ -8,6 +8,15 @@
 #
 #  Écosystèmes surveillés : npm (backend, frontend, mobile), les Dockerfiles
 #  et les actions GitHub utilisées par les pipelines.
+#
+#  MAÎTRISE DU VOLUME : à la première activation, Dependabot rattrape tout le
+#  retard accumulé et peut ouvrir une dizaine de PR d'un coup. Deux réglages
+#  limitent ce bruit :
+#    - `groups`   : regroupe les mises à jour mineures et correctives en UNE
+#                   seule PR par écosystème (les montées de version MAJEURES
+#                   restent isolées, car ce sont elles qui cassent le build) ;
+#    - `open-pull-requests-limit` : plafonne le nombre de PR ouvertes en même
+#                   temps, pour garder une file de revue lisible.
 # ============================================================================
 version: 2
 
@@ -18,17 +27,21 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     labels: [dependances, securite, backend]
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      # Toutes les mises à jour mineures/correctives en une seule PR.
+      mises-a-jour-mineures:
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /calm-space/frontend
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     labels: [dependances, securite, frontend]
     commit-message:
       prefix: "chore(deps)"
@@ -42,23 +55,32 @@ updates:
           - "webpack*"
           - "postcss*"
           - "tailwindcss"
+      # Tout le reste, en mineur/correctif, part également en une seule PR.
+      mises-a-jour-mineures:
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /calm-space/mobile
     schedule:
       interval: monthly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels: [dependances, mobile]
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      mises-a-jour-mineures:
+        update-types: [minor, patch]
 
   # --- Images de base des conteneurs ---------------------------------------
-  # Surveille les tags des images `FROM` (node:20-slim, nginx, postgres…) :
+  # Surveille les tags des images `FROM` (node:24-slim, nginx, postgres…) :
   # c'est ce qui apporte les correctifs de sécurité du système d'exploitation.
+  # Ces PR-là restent volontairement peu nombreuses mais prioritaires : c'est
+  # ce qui évite de retomber sur des images de base périmées.
   - package-ecosystem: docker
     directory: /calm-space/backend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
     labels: [dependances, securite, docker]
     commit-message:
       prefix: "chore(docker)"
@@ -67,6 +89,7 @@ updates:
     directory: /calm-space/frontend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
     labels: [dependances, securite, docker]
     commit-message:
       prefix: "chore(docker)"
@@ -76,6 +99,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 1
     labels: [dependances, ci]
+    groups:
+      actions-github:
+        patterns: ["*"]
     commit-message:
       prefix: "chore(ci)"

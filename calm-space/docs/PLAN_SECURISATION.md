@@ -125,9 +125,18 @@ corrective est réellement possible.
 
 **Complémentarité des trois outils.** `npm audit` ne voit que les paquets npm ; Trivy voit
 l'image entière, y compris le système d'exploitation de base — une faille OpenSSL dans
-`node:20-slim` n'apparaît que là. Dependabot, lui, ne détecte pas : il **corrige**, en
+l'image de base n'apparaît que là. Dependabot, lui, ne détecte pas : il **corrige**, en
 proposant la montée de version. Détection (audit + Trivy) et remédiation (Dependabot)
 forment ainsi une boucle complète.
+
+**La boucle a été vérifiée en conditions réelles.** À sa première exécution, Trivy a fait
+échouer le pipeline en signalant des vulnérabilités CRITIQUES corrigeables dans les images
+de base `node:20-slim` (Node 20 en fin de vie depuis avril 2026, donc sans correctifs de
+sécurité) et `nginx:1.27-alpine`. La correction retenue a été de **monter les images de
+base** (`node:24-slim`, version LTS active, et `nginx:1.31-alpine`) — et non d'abaisser le
+seuil de blocage du scanner, ce qui n'aurait fait que masquer le risque. La chaîne de
+tests a été alignée sur la même version de Node, afin que le code soit testé sur le
+runtime qui l'exécute réellement en production.
 
 **Limite assumée.** Ces outils couvrent les vulnérabilités **connues et publiées** des
 dépendances. Ils ne détectent pas une faille de logique métier propre à l'application

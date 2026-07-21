@@ -36,10 +36,10 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v4
 
-      - name: Installation de Node.js 20
+      - name: Installation de Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: calm-space/backend/package-lock.json
 
@@ -73,10 +73,10 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v4
 
-      - name: Installation de Node.js 20
+      - name: Installation de Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: calm-space/frontend/package-lock.json
 

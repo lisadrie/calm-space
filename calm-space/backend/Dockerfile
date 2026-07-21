@@ -2,7 +2,10 @@
 #  Backend CalmSpace — API Express + PostgreSQL + JWT
 #  Image de production : n'installe que les dépendances nécessaires au runtime.
 # ============================================================================
-FROM node:20-slim
+# Node 24 = version LTS active. Les versions plus anciennes (Node 20, en fin de
+# vie depuis avril 2026) ne reçoivent plus de correctifs de sécurité : le scan
+# Trivy de la CI remontait des vulnérabilités CRITIQUES corrigeables.
+FROM node:24-slim
 
 # Dossier de travail dans le conteneur
 WORKDIR /app
