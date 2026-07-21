@@ -76,7 +76,7 @@ La colonne « État » indique ce qui est **déjà implémenté** dans le protot
 | R5 | **HTTPS/TLS obligatoire** (chiffrement navigateur↔serveur), en-tête **HSTS** (helmet), redirection HTTP→HTTPS au déploiement. | Rotation des certificats, forçage HTTPS. | ⚙️ Au déploiement |
 | R6 | JWT **signé** (secret fort en variable d'environnement), **expiration courte (1 h)**, cookie `httpOnly` (inaccessible au JS). | Rotation du secret (invalide tous les jetons), déconnexion forcée. | ✅ Implémenté |
 | R7 | Limiteur **global : 300 req / 15 min / IP**, pare-feu / reverse-proxy nginx. | Bannissement d'IP, mise à l'échelle, activation d'une protection anti-DDoS. | ✅ Partiel |
-| R8 | **`npm audit`** régulier, mises à jour, versions figées (`package-lock.json`). | Application du correctif (`npm audit fix`) ou remplacement de la dépendance. | ✅ Implémenté |
+| R8 | **`npm audit` automatisé** dans la CI (à chaque commit + veille hebdomadaire), **Dependabot** (PR de mise à jour automatiques), **Trivy** (scan des images Docker), versions figées (`package-lock.json`). | Fusion de la PR Dependabot ou correctif manuel (`npm audit fix`), remplacement de la dépendance si aucun correctif n'existe. | ✅ Implémenté |
 | R9 | Cookies **`SameSite`**, en-tête d'origine vérifié via **CORS** (liste blanche d'origines). | Invalidation des sessions, correctif. | ✅ Partiel |
 | R10 | **Masquage `X-Powered-By`** (helmet), messages d'erreur génériques côté client. | Correctif de configuration. | ✅ Implémenté |
 | R11 | Contrôle des rôles côté serveur (middleware d'authentification + vérification du rôle), routes admin protégées. | Retrait des droits, audit des accès. | ✅ Partiel |
@@ -91,6 +91,48 @@ La colonne « État » indique ce qui est **déjà implémenté** dans le protot
 - ✅ **Validation et assainissement** systématiques des entrées utilisateur
 - 🌐 **CORS** restreint à une liste blanche d'origines
 - 🧪 **Tests de sécurité automatisés** (bloc T-SEC) exécutés à chaque commit par la CI
+
+---
+
+## 3 bis. Outillage de sécurisation automatique
+
+La sécurité ne repose pas uniquement sur des mesures écrites : elle est **outillée** et
+**rejouée automatiquement** à chaque évolution du code. Trois outils complémentaires
+couvrent trois périmètres différents.
+
+| Outil | Périmètre couvert | Déclenchement | Effet en cas de problème |
+|-------|-------------------|---------------|--------------------------|
+| **`npm audit`** (GitHub Actions) | Vulnérabilités connues des **paquets npm** (backend, frontend) | Chaque push / PR + **tous les lundis 6 h** | Backend : la CI **échoue** dès une faille *haute* ou *critique* en production. Frontend : rapport informatif (voir note ci-dessous) |
+| **Dependabot** | **Mises à jour** des paquets npm, des images de base Docker et des actions GitHub | Hebdomadaire (mensuel pour le mobile) | Ouvre automatiquement une **Pull Request** de mise à jour, relue et validée par la CI avant fusion |
+| **Trivy** | Vulnérabilités des **images Docker** : distribution de base (Debian, Alpine), bibliothèques système (OpenSSL, zlib…), paquets applicatifs | Chaque push / PR + hebdomadaire | Rapport complet *haute + critique* ; la CI **échoue** sur une faille **critique disposant d'un correctif** |
+
+**Fichiers de configuration :** `.github/workflows/security.yml` et `.github/dependabot.yml`.
+
+**Choix de conception — pourquoi tout n'est pas bloquant.** Un pipeline qui échoue en
+permanence finit par être ignoré : le seuil de blocage a donc été placé là où une action
+corrective est réellement possible.
+
+- **Backend — bloquant sur les dépendances de production.** Seuls les paquets embarqués
+  dans l'image et exposés en ligne peuvent être attaqués ; une faille dans ESLint ou Jest
+  ne s'exécute jamais en production. L'audit complet reste produit, mais en informatif.
+- **Frontend — informatif.** Create React App déclare `react-scripts` dans les
+  `dependencies` alors qu'il ne sert qu'à **compiler** l'application ; il entraîne webpack,
+  Babel et Jest, à l'origine de la quasi-totalité des alertes. Ces paquets ne sont pas
+  livrés au navigateur : le build de production ne contient que du HTML/CSS/JS statique
+  servi par nginx. Le rapport est examiné à chaque revue de dépendances.
+- **Trivy — bloquant sur le critique corrigeable uniquement** (`ignore-unfixed`) : bloquer
+  sur une faille sans correctif publié en amont laisserait l'équipe sans action possible.
+
+**Complémentarité des trois outils.** `npm audit` ne voit que les paquets npm ; Trivy voit
+l'image entière, y compris le système d'exploitation de base — une faille OpenSSL dans
+`node:20-slim` n'apparaît que là. Dependabot, lui, ne détecte pas : il **corrige**, en
+proposant la montée de version. Détection (audit + Trivy) et remédiation (Dependabot)
+forment ainsi une boucle complète.
+
+**Limite assumée.** Ces outils couvrent les vulnérabilités **connues et publiées** des
+dépendances. Ils ne détectent pas une faille de logique métier propre à l'application
+(mauvais contrôle de rôle, référence directe à un objet…) : celle-ci relève de la revue
+de code en Pull Request et des tests de sécurité automatisés (bloc T-SEC).
 
 ---
 
@@ -169,7 +211,8 @@ L'application permet d'exercer les droits RGPD : **accès, rectification** (modi
 - **Intégration continue** (GitHub Actions) : lint (ESLint) + tests automatisés à chaque commit,
   empêchant l'intégration de code cassé ou non conforme.
 - **Tests automatisés** dont un socle dédié à la sécurité (authentification, injection, en-têtes).
-- **Veille sur les dépendances** via `npm audit`.
+- **Veille automatisée sur les dépendances** : `npm audit` en CI, **Dependabot** et **Trivy**
+  (détail en §3 bis).
 
 ---
 

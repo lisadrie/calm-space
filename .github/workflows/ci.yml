@@ -1,16 +1,19 @@
 # ============================================================================
-#  CI - CalmSpace (Intégration Continue)
+#  CI/CD - CalmSpace (Intégration et Déploiement Continus)
 #  ---------------------------------------------------------------------------
 #  Ce pipeline s'exécute automatiquement à chaque push et pull request.
-#  Il garantit qu'aucun code cassé n'est intégré (lint + tests + build).
+#  Il garantit qu'aucun code cassé n'est intégré (lint + tests + build),
+#  puis publie automatiquement les images Docker déployables.
 #
 #  Jobs :
-#    - backend  : installe les dépendances, vérifie le lint, lance les 40 tests Jest
+#    - backend  : installe les dépendances, vérifie le lint, lance les tests Jest
 #    - frontend : installe les dépendances, vérifie le lint et compile le build React
+#    - deploy   : construit et publie les images Docker (uniquement si CI verte)
 #
-#  Les deux jobs tournent en parallèle sur des machines Ubuntu propres.
+#  Les jobs backend et frontend tournent en parallèle sur des machines Ubuntu
+#  propres. Le job deploy attend que LES DEUX soient verts avant de démarrer.
 # ============================================================================
-name: CI - CalmSpace
+name: CI/CD - CalmSpace
 
 on:
   push:
@@ -82,3 +85,69 @@ jobs:
 
       - name: Compilation du build de production
         run: npm run build
+
+  # ---------------------------------------------------------------------------
+  #  DÉPLOIEMENT CONTINU (CD)
+  #  Une fois la CI terminée ET verte, le déploiement se fait automatiquement :
+  #  les images Docker du backend et du frontend sont construites puis publiées
+  #  sur le registre GitHub (ghcr.io). L'environnement cible n'a plus qu'à faire
+  #  un `docker compose pull && docker compose up -d` pour être à jour.
+  #
+  #  Conditions de déclenchement :
+  #    - needs : les jobs backend ET frontend doivent avoir réussi ;
+  #    - if    : uniquement sur un push vers master (pas sur les Pull Requests).
+  #  → une PR est donc testée mais jamais déployée : seul le code fusionné
+  #    sur la branche stable part en déploiement.
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Déploiement - Publication des images Docker
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      packages: write   # autorise l'écriture sur ghcr.io
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Connexion au registre GitHub (ghcr.io)
+        # GITHUB_TOKEN est fourni automatiquement par GitHub Actions :
+        # aucun mot de passe n'est stocké dans le dépôt.
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Préparation du nom des images (en minuscules)
+        # ghcr.io n'accepte que des noms en minuscules.
+        id: vars
+        run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Construction et publication de l'image backend
+        uses: docker/build-push-action@v6
+        with:
+          context: calm-space/backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.repo }}/backend:latest
+            ghcr.io/${{ steps.vars.outputs.repo }}/backend:${{ github.sha }}
+
+      - name: Construction et publication de l'image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: calm-space/frontend
+          push: true
+          build-args: |
+            REACT_APP_API_URL=http://localhost:5001
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.repo }}/frontend:latest
+            ghcr.io/${{ steps.vars.outputs.repo }}/frontend:${{ github.sha }}
+
+      - name: Récapitulatif du déploiement
+        run: |
+          echo "### Déploiement automatique terminé" >> "$GITHUB_STEP_SUMMARY"
+          echo "Images publiées sur ghcr.io (tag \`latest\` et \`${GITHUB_SHA}\`) :" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ghcr.io/${{ steps.vars.outputs.repo }}/backend" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ghcr.io/${{ steps.vars.outputs.repo }}/frontend" >> "$GITHUB_STEP_SUMMARY"

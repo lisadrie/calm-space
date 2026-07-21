@@ -81,20 +81,44 @@ Pull Request, `.gitignore` excluant les secrets (`.env`) et les dépendances (`n
 L'automatisation repose sur **GitHub Actions** (fichier `.github/workflows/ci.yml`). À chaque
 **push** ou **Pull Request**, deux tâches s'exécutent **automatiquement** en parallèle :
 
-| Job | Étapes automatisées |
-|-----|--------------------|
-| **Backend** | `npm ci` → **ESLint** (analyse statique) → **Jest** (43 tests unitaires) |
-| **Frontend** | `npm ci` → **build** de production React |
+| Job | Déclenchement | Étapes automatisées |
+|-----|---------------|--------------------|
+| **Backend** | push + Pull Request | `npm ci` → **ESLint** (analyse statique) → **Jest** (43 tests unitaires) |
+| **Frontend** | push + Pull Request | `npm ci` → **build** de production React |
+| **Deploy** | push sur `master` **uniquement** | build des images Docker → **publication automatique** sur `ghcr.io` |
 
-**Rôle :** empêcher l'intégration de code cassé ou non conforme. Une Pull Request ne peut être
-fusionnée que si **tous les tests passent** (garantie de non-régression).
+**Rôle de l'intégration continue :** empêcher l'intégration de code cassé ou non conforme. Une
+Pull Request ne peut être fusionnée que si **tous les tests passent** (garantie de non-régression).
+
+**Rôle du déploiement continu :** une fois la CI **terminée et verte**, le déploiement se fait
+**automatiquement**, sans intervention humaine. Le job `deploy` construit les images Docker du
+backend et du frontend, puis les publie sur le registre **GitHub Container Registry (ghcr.io)**
+avec deux étiquettes : `latest` (dernière version stable) et le **SHA du commit** (permet de
+revenir à n'importe quelle version précédente en cas d'incident).
+
+Le job `deploy` est conditionné par :
+- `needs: [backend, frontend]` → il ne démarre **que si les deux jobs de test ont réussi** ;
+- `if: push sur master` → une Pull Request est **testée mais jamais déployée**.
+
+L'authentification au registre utilise le `GITHUB_TOKEN` fourni automatiquement par GitHub
+Actions : **aucun mot de passe n'est stocké dans le dépôt**.
 
 ```
-   Développeur                GitHub                     Résultat
-   ───────────                ──────                     ────────
-   git push  ───────────►  Déclenche la CI  ──────►  ✅ Tests + lint + build
-   Pull Request               (Actions)               verts → fusion autorisée
-                                                       ❌ échec → fusion bloquée
+   Développeur              GitHub Actions                      Résultat
+   ───────────              ──────────────                      ────────
+                         ┌─ Backend  : lint + tests ─┐
+   git push (PR)  ─────► │                           │──►  ❌ échec  : fusion bloquée
+                         └─ Frontend : lint + build ─┘     ✅ verts  : fusion autorisée
+                                       │
+   merge sur master ───────────────────▼
+                            Deploy (si CI verte)      ──►  Images Docker publiées
+                            build + push ghcr.io           automatiquement sur ghcr.io
+```
+
+Sur l'environnement cible, la mise à jour se résume alors à :
+
+```bash
+docker compose pull && docker compose up -d
 ```
 
 ---
@@ -154,6 +178,7 @@ Pour un déploiement en production, la même image Docker serait déployée sur 
 | Environnement réellement configuré | Docker Compose (§6) |
 | Outil de versioning | Git + GitHub, stratégie de branches + PR (§4) |
 | Automatisation / intégration continue | GitHub Actions : lint + tests + build (§5) |
+| Déploiement automatisé | Job `deploy` déclenché automatiquement après une CI verte : publication des images Docker sur ghcr.io (§5) |
 | Étapes et ressources | Procédure détaillée + ressources (§6) |
 
 ---
