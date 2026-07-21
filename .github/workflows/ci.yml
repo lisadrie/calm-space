@@ -126,7 +126,7 @@ jobs:
         run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Construction et publication de l'image backend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: calm-space/backend
           push: true
@@ -135,7 +135,7 @@ jobs:
             ghcr.io/${{ steps.vars.outputs.repo }}/backend:${{ github.sha }}
 
       - name: Construction et publication de l'image frontend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: calm-space/frontend
           push: true
