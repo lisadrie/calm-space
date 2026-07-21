@@ -7,7 +7,7 @@
 
 # --- Étape 1 : compilation du build de production ---------------------------
 # Node 24 = version LTS active (voir la note du Dockerfile backend).
-FROM node:24-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 
 COPY package*.json ./
