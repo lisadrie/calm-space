@@ -105,7 +105,7 @@ jobs:
           fetch-depth: 0
 
       - name: Analyse SonarCloud
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           # Jeton d'authentification, stocké dans les secrets GitHub
           # (jamais écrit en clair dans le dépôt).
