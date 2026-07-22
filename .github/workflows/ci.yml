@@ -87,6 +87,31 @@ jobs:
         run: npm run build
 
   # ---------------------------------------------------------------------------
+  #  QUALITÉ & SÉCURITÉ DU CODE (SonarCloud)
+  #  Analyse statique avancée : vulnérabilités potentielles, points sensibles de
+  #  sécurité, bugs et dette technique. Complète ESLint, qui ne vérifie que la
+  #  propreté et la cohérence du code.
+  #  La configuration (projet, sources, exclusions) est dans sonar-project.properties
+  # ---------------------------------------------------------------------------
+  sonarcloud:
+    name: Analyse SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+        with:
+          # Historique complet : SonarCloud en a besoin pour dater les problèmes
+          # et distinguer le code nouveau du code existant.
+          fetch-depth: 0
+
+      - name: Analyse SonarCloud
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          # Jeton d'authentification, stocké dans les secrets GitHub
+          # (jamais écrit en clair dans le dépôt).
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ---------------------------------------------------------------------------
   #  DÉPLOIEMENT CONTINU (CD)
   #  Une fois la CI terminée ET verte, le déploiement se fait automatiquement :
   #  les images Docker du backend et du frontend sont construites puis publiées
